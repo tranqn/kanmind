@@ -1,5 +1,5 @@
 # 2. Drittanbieter
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -35,10 +35,16 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        """Validate credentials via serializer and return token."""
+        """Validate credentials and return token."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = authenticate(
+            request,
+            username=serializer.validated_data['email'],
+            password=serializer.validated_data['password'],
+        )
+        if user is None:
+            return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_400_BAD_REQUEST)
         token, _ = Token.objects.get_or_create(user=user)
         return Response(
             {'token': token.key, 'fullname': user.fullname, 'email': user.email, 'user_id': user.id},

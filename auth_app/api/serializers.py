@@ -1,5 +1,5 @@
 # 2. Drittanbieter
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 User = get_user_model()
@@ -38,14 +38,6 @@ class LoginSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-
-    def validate(self, attrs):
-        """Authenticate the user and attach to validated_data."""
-        user = authenticate(username=attrs['email'], password=attrs['password'])
-        if user is None:
-            raise serializers.ValidationError({'email': 'Invalid credentials.'})
-        attrs['user'] = user
-        return attrs
 
 
 class UserBasicSerializer(serializers.ModelSerializer):
