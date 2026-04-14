@@ -46,3 +46,11 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError({'email': 'Invalid credentials.'})
         attrs['user'] = user
         return attrs
+
+
+class UserBasicSerializer(serializers.ModelSerializer):
+    """Minimal user representation for email-check and nested responses."""
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'fullname']
