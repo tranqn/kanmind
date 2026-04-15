@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 # 3. Lokale Importe
-from ..models import Board
+from ..models import Board, Task
 
 User = get_user_model()
 
@@ -76,3 +76,30 @@ class BoardCreateSerializer(serializers.ModelSerializer):
         board = Board.objects.create(**validated_data)
         board.members.set(members)
         return board
+
+
+class TaskInlineSerializer(serializers.ModelSerializer):
+    """Compact task serializer used inside board detail responses."""
+
+    assignee = UserInlineSerializer(read_only=True)
+    reviewer = UserInlineSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
+class BoardDetailSerializer(serializers.ModelSerializer):
+    """Full board representation with members and tasks."""
+
+    owner_id = serializers.IntegerField(source='owner.id', read_only=True)
+    members = UserInlineSerializer(many=True, read_only=True)
+    tasks = TaskInlineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Board
+        fields = ['id', 'title', 'owner_id', 'members', 'tasks']
