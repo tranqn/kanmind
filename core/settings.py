@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'corsheaders',
     # Local apps
     'auth_app',
+    'kanban_app',
 ]
 
 MIDDLEWARE = [
