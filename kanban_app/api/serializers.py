@@ -103,3 +103,33 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
+
+class BoardPatchSerializer(serializers.ModelSerializer):
+    """Serializer for partial board updates (title and members)."""
+
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = Board
+        fields = ['title', 'members']
+
+    def update(self, instance, validated_data):
+        """Update title and replace member list."""
+        members = validated_data.pop('members', None)
+        instance.title = validated_data.get('title', instance.title)
+        instance.save()
+        if members is not None:
+            instance.members.set(members)
+        return instance
+
+    def to_representation(self, instance):
+        """Return full board data with nested owner and members after update."""
+        return {
+            'id': instance.id,
+            'title': instance.title,
+            'owner_data': UserInlineSerializer(instance.owner).data,
+            'members_data': UserInlineSerializer(instance.members.all(), many=True).data,
+        }
