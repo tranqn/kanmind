@@ -87,7 +87,7 @@ class TaskInlineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = ['id', 'title', 'description', 'status', 'priority', 'assignee', 'reviewer', 'due_date', 'comments_count']
 
     def get_comments_count(self, obj):
         return obj.comments.count()
@@ -168,5 +168,5 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ['id', 'created_at', 'author', 'content']
         read_only_fields = ['id', 'created_at', 'author']
