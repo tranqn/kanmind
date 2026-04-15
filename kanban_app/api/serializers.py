@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 # 3. Lokale Importe
-from ..models import Board, Task
+from ..models import Board, Comment, Task
 
 User = get_user_model()
 
@@ -133,3 +133,40 @@ class BoardPatchSerializer(serializers.ModelSerializer):
             'owner_data': UserInlineSerializer(instance.owner).data,
             'members_data': UserInlineSerializer(instance.members.all(), many=True).data,
         }
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    """Full task serializer with nested user representations."""
+
+    assignee = UserInlineSerializer(read_only=True)
+    reviewer = UserInlineSerializer(read_only=True)
+    assignee_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True
+    )
+    reviewer_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True
+    )
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 'board', 'title', 'description', 'status', 'priority',
+            'assignee', 'assignee_id', 'reviewer', 'reviewer_id',
+            'due_date', 'comments_count',
+        ]
+        read_only_fields = ['id', 'comments_count']
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for task comments with author fullname."""
+
+    author = serializers.CharField(source='author.fullname', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'author']
