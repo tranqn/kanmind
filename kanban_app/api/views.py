@@ -105,3 +105,23 @@ class ReviewingView(ListAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(reviewer=self.request.user)
+
+
+class TaskCreateView(APIView):
+    """Create a new task inside a board."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Create task if user is a board member."""
+        serializer = TaskSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        board = serializer.validated_data.get('board')
+        if board is None:
+            return Response({'detail': 'Board required.'}, status=status.HTTP_400_BAD_REQUEST)
+        is_member = board.members.filter(id=request.user.id).exists()
+        is_owner = board.owner == request.user
+        if not (is_member or is_owner):
+            return Response({'detail': 'You must be a board member.'}, status=status.HTTP_403_FORBIDDEN)
+        task = serializer.save(created_by=request.user)
+        return Response(TaskSerializer(task).data, status=status.HTTP_201_CREATED)
