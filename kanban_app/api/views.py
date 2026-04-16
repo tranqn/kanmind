@@ -1,17 +1,19 @@
 # 2. Drittanbieter
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # 3. Lokale Importe
-from ..models import Board
+from ..models import Board, Task
 from .permissions import IsBoardMemberOrOwner, IsBoardOwner
 from .serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
     BoardListSerializer,
     BoardPatchSerializer,
+    TaskSerializer,
 )
 
 
@@ -83,3 +85,23 @@ class BoardDetailView(APIView):
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsBoardOwner()]
         return [IsAuthenticated(), IsBoardMemberOrOwner()]
+
+
+class AssignedToMeView(ListAPIView):
+    """Return tasks where the current user is the assignee."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = TaskSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(assignee=self.request.user)
+
+
+class ReviewingView(ListAPIView):
+    """Return tasks where the current user is the reviewer."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = TaskSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(reviewer=self.request.user)
