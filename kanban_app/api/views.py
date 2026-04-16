@@ -6,10 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # 3. Lokale Importe
-from ..models import Board, Task
+from ..models import Board, Comment, Task
 from .permissions import (
     IsBoardMemberOrOwner,
     IsBoardOwner,
+    IsCommentAuthor,
     IsTaskBoardMember,
     IsTaskCreatorOrBoardOwner,
 )
@@ -18,6 +19,7 @@ from .serializers import (
     BoardDetailSerializer,
     BoardListSerializer,
     BoardPatchSerializer,
+    CommentSerializer,
     TaskSerializer,
 )
 
@@ -171,3 +173,52 @@ class TaskDetailView(APIView):
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsTaskCreatorOrBoardOwner()]
         return [IsAuthenticated(), IsTaskBoardMember()]
+
+
+class CommentListCreateView(APIView):
+    """List or create comments for a task."""
+
+    permission_classes = [IsAuthenticated, IsTaskBoardMember]
+
+    def get_task(self, task_id):
+        """Fetch task or return None."""
+        try:
+            return Task.objects.get(pk=task_id)
+        except Task.DoesNotExist:
+            return None
+
+    def get(self, request, task_id):
+        """Return all comments for the task."""
+        task = self.get_task(task_id)
+        if task is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, task)
+        serializer = CommentSerializer(task.comments.all(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, task_id):
+        """Create a new comment authored by the current user."""
+        task = self.get_task(task_id)
+        if task is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, task)
+        serializer = CommentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        comment = serializer.save(task=task, author=request.user)
+        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+
+class CommentDeleteView(APIView):
+    """Delete a comment — only the author is allowed."""
+
+    permission_classes = [IsAuthenticated, IsCommentAuthor]
+
+    def delete(self, request, task_id, comment_id):
+        """Delete comment if it belongs to the task and user is author."""
+        try:
+            comment = Comment.objects.get(pk=comment_id, task_id=task_id)
+        except Comment.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, comment)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
