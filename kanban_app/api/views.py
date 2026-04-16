@@ -7,7 +7,12 @@ from rest_framework.views import APIView
 
 # 3. Lokale Importe
 from ..models import Board, Task
-from .permissions import IsBoardMemberOrOwner, IsBoardOwner
+from .permissions import (
+    IsBoardMemberOrOwner,
+    IsBoardOwner,
+    IsTaskBoardMember,
+    IsTaskCreatorOrBoardOwner,
+)
 from .serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
@@ -125,3 +130,44 @@ class TaskCreateView(APIView):
             return Response({'detail': 'You must be a board member.'}, status=status.HTTP_403_FORBIDDEN)
         task = serializer.save(created_by=request.user)
         return Response(TaskSerializer(task).data, status=status.HTTP_201_CREATED)
+
+
+class TaskDetailView(APIView):
+    """Update or delete a single task."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        """Fetch task or return None."""
+        try:
+            return Task.objects.get(pk=pk)
+        except Task.DoesNotExist:
+            return None
+
+    def patch(self, request, task_id):
+        """Update task fields; board reassignment is not allowed."""
+        task = self.get_object(task_id)
+        if task is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, task)
+        if 'board' in request.data:
+            return Response({'detail': 'Changing board is not allowed.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TaskSerializer(task, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, task_id):
+        """Delete task — only creator or board owner allowed."""
+        task = self.get_object(task_id)
+        if task is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, task)
+        task.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        """Assign delete-specific permissions."""
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsTaskCreatorOrBoardOwner()]
+        return [IsAuthenticated(), IsTaskBoardMember()]
