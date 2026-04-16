@@ -6,7 +6,13 @@ from rest_framework.views import APIView
 
 # 3. Lokale Importe
 from ..models import Board
-from .serializers import BoardCreateSerializer, BoardListSerializer
+from .permissions import IsBoardMemberOrOwner, IsBoardOwner
+from .serializers import (
+    BoardCreateSerializer,
+    BoardDetailSerializer,
+    BoardListSerializer,
+    BoardPatchSerializer,
+)
 
 
 class BoardListCreateView(APIView):
@@ -29,3 +35,51 @@ class BoardListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         board = serializer.save(owner=request.user)
         return Response(BoardCreateSerializer(board).data, status=status.HTTP_201_CREATED)
+
+
+class BoardDetailView(APIView):
+    """Retrieve, update, or delete a single board."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        """Fetch board or return None."""
+        try:
+            return Board.objects.get(pk=pk)
+        except Board.DoesNotExist:
+            return None
+
+    def get(self, request, board_id):
+        """Return board detail with tasks."""
+        board = self.get_object(board_id)
+        if board is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, board)
+        serializer = BoardDetailSerializer(board)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, board_id):
+        """Update board title and members."""
+        board = self.get_object(board_id)
+        if board is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, board)
+        serializer = BoardPatchSerializer(board, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updated = serializer.save()
+        return Response(BoardPatchSerializer(updated).to_representation(updated), status=status.HTTP_200_OK)
+
+    def delete(self, request, board_id):
+        """Delete board — only owner allowed."""
+        board = self.get_object(board_id)
+        if board is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, board)
+        board.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        """Assign stricter permissions for delete."""
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsBoardOwner()]
+        return [IsAuthenticated(), IsBoardMemberOrOwner()]
