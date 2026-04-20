@@ -53,6 +53,10 @@ python manage.py runserver
 
 The API is now available at `http://127.0.0.1:8000/`.
 
+### 7. Launch the frontend
+
+The `frontend/` directory contains a Vanilla JS single-page app. Open it with VS Code's **Live Server** extension (right-click `frontend/index.html` → **Open with Live Server**) while the Django server is running.
+
 ## Project Structure
 
 ```
@@ -62,6 +66,7 @@ kanmind/
 │   └── api/            # serializers, views, urls
 ├── kanban_app/         # Boards, tasks, comments
 │   └── api/            # serializers, views, urls, permissions
+├── frontend/           # Vanilla JS frontend (served via Live Server)
 ├── manage.py
 └── requirements.txt
 ```
