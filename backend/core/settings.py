@@ -9,7 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-only-change-me')
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-dev-only-change-me')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
@@ -69,11 +71,12 @@ DATABASES = {
     }
 }
 
+_PW_VALIDATOR_BASE = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': f'{_PW_VALIDATOR_BASE}.UserAttributeSimilarityValidator'},
+    {'NAME': f'{_PW_VALIDATOR_BASE}.MinimumLengthValidator'},
+    {'NAME': f'{_PW_VALIDATOR_BASE}.CommonPasswordValidator'},
+    {'NAME': f'{_PW_VALIDATOR_BASE}.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'en-us'

@@ -16,15 +16,17 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ['fullname', 'email', 'password', 'repeated_password']
 
     def validate_email(self, value):
-        """Reject duplicate emails with a 400 rather than a DB IntegrityError."""
+        """Reject duplicate emails with 400 instead of IntegrityError."""
         if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('A user with this email already exists.')
+            raise serializers.ValidationError(
+                'A user with this email already exists.')
         return value
 
     def validate(self, attrs):
         """Ensure both passwords match."""
         if attrs['password'] != attrs['repeated_password']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+            raise serializers.ValidationError(
+                {'password': 'Passwords do not match.'})
         return attrs
 
     def create(self, validated_data):

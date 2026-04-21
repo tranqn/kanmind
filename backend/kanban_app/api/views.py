@@ -43,7 +43,8 @@ class BoardListCreateView(APIView):
         serializer = BoardCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         board = serializer.save(owner=request.user)
-        return Response(BoardCreateSerializer(board).data, status=status.HTTP_201_CREATED)
+        return Response(BoardCreateSerializer(board).data,
+                        status=status.HTTP_201_CREATED)
 
 
 class BoardDetailView(APIView):
@@ -62,7 +63,8 @@ class BoardDetailView(APIView):
         """Return board detail with tasks."""
         board = self.get_object(board_id)
         if board is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, board)
         serializer = BoardDetailSerializer(board)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -71,18 +73,22 @@ class BoardDetailView(APIView):
         """Update board title and members."""
         board = self.get_object(board_id)
         if board is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, board)
-        serializer = BoardPatchSerializer(board, data=request.data, partial=True)
+        serializer = BoardPatchSerializer(
+            board, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         updated = serializer.save()
-        return Response(BoardPatchSerializer(updated).to_representation(updated), status=status.HTTP_200_OK)
+        return Response(BoardPatchSerializer(updated).to_representation(
+            updated), status=status.HTTP_200_OK)
 
     def delete(self, request, board_id):
         """Delete board — only owner allowed."""
         board = self.get_object(board_id)
         if board is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, board)
         board.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -125,13 +131,16 @@ class TaskCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         board = serializer.validated_data.get('board')
         if board is None:
-            return Response({'detail': 'Board required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Board required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         is_member = board.members.filter(id=request.user.id).exists()
         is_owner = board.owner == request.user
         if not (is_member or is_owner):
-            return Response({'detail': 'You must be a board member.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': 'You must be a board member.'},
+                            status=status.HTTP_403_FORBIDDEN)
         task = serializer.save(created_by=request.user)
-        return Response(TaskSerializer(task).data, status=status.HTTP_201_CREATED)
+        return Response(TaskSerializer(task).data,
+                        status=status.HTTP_201_CREATED)
 
 
 class TaskDetailView(APIView):
@@ -150,10 +159,12 @@ class TaskDetailView(APIView):
         """Update task fields; board reassignment is not allowed."""
         task = self.get_object(task_id)
         if task is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, task)
         if 'board' in request.data:
-            return Response({'detail': 'Changing board is not allowed.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Changing board is not allowed.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         serializer = TaskSerializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -163,7 +174,8 @@ class TaskDetailView(APIView):
         """Delete task — only creator or board owner allowed."""
         task = self.get_object(task_id)
         if task is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, task)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -191,7 +203,8 @@ class CommentListCreateView(APIView):
         """Return all comments for the task."""
         task = self.get_task(task_id)
         if task is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, task)
         serializer = CommentSerializer(task.comments.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -200,12 +213,14 @@ class CommentListCreateView(APIView):
         """Create a new comment authored by the current user."""
         task = self.get_task(task_id)
         if task is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, task)
         serializer = CommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         comment = serializer.save(task=task, author=request.user)
-        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+        return Response(CommentSerializer(comment).data,
+                        status=status.HTTP_201_CREATED)
 
 
 class CommentDeleteView(APIView):
@@ -218,7 +233,8 @@ class CommentDeleteView(APIView):
         try:
             comment = Comment.objects.get(pk=comment_id, task_id=task_id)
         except Comment.DoesNotExist:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, comment)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

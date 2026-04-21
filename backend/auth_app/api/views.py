@@ -7,7 +7,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # 3. Local imports
-from .serializers import LoginSerializer, RegistrationSerializer, UserBasicSerializer
+from .serializers import (
+    LoginSerializer,
+    RegistrationSerializer,
+    UserBasicSerializer,
+)
 
 User = get_user_model()
 
@@ -24,7 +28,8 @@ class RegistrationView(APIView):
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
         return Response(
-            {'token': token.key, 'fullname': user.fullname, 'email': user.email, 'user_id': user.id},
+            {'token': token.key, 'fullname': user.fullname,
+                'email': user.email, 'user_id': user.id},
             status=status.HTTP_201_CREATED,
         )
 
@@ -44,10 +49,12 @@ class LoginView(APIView):
             password=serializer.validated_data['password'],
         )
         if user is None:
-            return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Invalid credentials.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         token, _ = Token.objects.get_or_create(user=user)
         return Response(
-            {'token': token.key, 'fullname': user.fullname, 'email': user.email, 'user_id': user.id},
+            {'token': token.key, 'fullname': user.fullname,
+                'email': user.email, 'user_id': user.id},
             status=status.HTTP_200_OK,
         )
 
@@ -61,10 +68,12 @@ class EmailCheckView(APIView):
         """Return user data if email exists, 404 otherwise."""
         email = request.query_params.get('email')
         if not email:
-            return Response({'detail': 'Email parameter required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Email parameter required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'detail': 'Email not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Email not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         serializer = UserBasicSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)

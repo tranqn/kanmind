@@ -17,7 +17,14 @@ class BoardAdmin(admin.ModelAdmin):
 class TaskAdmin(admin.ModelAdmin):
     """Admin configuration for Task."""
 
-    list_display = ['id', 'title', 'board', 'status', 'priority', 'assignee', 'reviewer']
+    list_display = [
+        'id',
+        'title',
+        'board',
+        'status',
+        'priority',
+        'assignee',
+        'reviewer']
     list_filter = ['status', 'priority']
     search_fields = ['title', 'board__title']
 

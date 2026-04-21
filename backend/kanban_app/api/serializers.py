@@ -27,7 +27,14 @@ class BoardListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Board
-        fields = ['id', 'title', 'member_count', 'ticket_count', 'tasks_to_do_count', 'tasks_high_prio_count', 'owner_id']
+        fields = [
+            'id',
+            'title',
+            'member_count',
+            'ticket_count',
+            'tasks_to_do_count',
+            'tasks_high_prio_count',
+            'owner_id']
 
     def get_member_count(self, obj):
         return obj.members.count()
@@ -56,7 +63,15 @@ class BoardCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Board
-        fields = ['id', 'title', 'members', 'member_count', 'ticket_count', 'tasks_to_do_count', 'tasks_high_prio_count', 'owner_id']
+        fields = [
+            'id',
+            'title',
+            'members',
+            'member_count',
+            'ticket_count',
+            'tasks_to_do_count',
+            'tasks_high_prio_count',
+            'owner_id']
 
     def get_member_count(self, obj):
         return obj.members.count()
@@ -87,7 +102,16 @@ class TaskInlineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['id', 'title', 'description', 'status', 'priority', 'assignee', 'reviewer', 'due_date', 'comments_count']
+        fields = [
+            'id',
+            'title',
+            'description',
+            'status',
+            'priority',
+            'assignee',
+            'reviewer',
+            'due_date',
+            'comments_count']
 
     def get_comments_count(self, obj):
         return obj.comments.count()
@@ -126,12 +150,15 @@ class BoardPatchSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        """Return full board data with nested owner and members after update."""
+        """Return board with nested owner and members after update."""
+        members = UserInlineSerializer(
+            instance.members.all(), many=True
+        ).data
         return {
             'id': instance.id,
             'title': instance.title,
             'owner_data': UserInlineSerializer(instance.owner).data,
-            'members_data': UserInlineSerializer(instance.members.all(), many=True).data,
+            'members_data': members,
         }
 
 
@@ -142,22 +169,34 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=Board.objects.all(), required=False
     )
     board_id = serializers.PrimaryKeyRelatedField(
-        queryset=Board.objects.all(), source='board', write_only=True, required=False
+        queryset=Board.objects.all(),
+        source='board',
+        write_only=True,
+        required=False,
     )
     assignee = UserInlineSerializer(read_only=True)
     reviewer = UserInlineSerializer(read_only=True)
     assignee_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True
+        queryset=User.objects.all(),
+        source='assignee',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
     reviewer_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True
+        queryset=User.objects.all(),
+        source='reviewer',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
     comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
         fields = [
-            'id', 'board', 'board_id', 'title', 'description', 'status', 'priority',
+            'id', 'board', 'board_id', 'title', 'description',
+            'status', 'priority',
             'assignee', 'assignee_id', 'reviewer', 'reviewer_id',
             'due_date', 'comments_count',
         ]
@@ -166,7 +205,8 @@ class TaskSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Require board on create (either `board` or `board_id` accepted)."""
         if self.instance is None and 'board' not in attrs:
-            raise serializers.ValidationError({'board': 'This field is required.'})
+            raise serializers.ValidationError(
+                {'board': 'This field is required.'})
         return attrs
 
     def get_comments_count(self, obj):

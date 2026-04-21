@@ -7,7 +7,8 @@ class IsBoardMemberOrOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """Check membership or ownership on a Board instance."""
-        return obj.owner == request.user or obj.members.filter(id=request.user.id).exists()
+        return obj.owner == request.user or obj.members.filter(
+            id=request.user.id).exists()
 
 
 class IsBoardOwner(BasePermission):
@@ -24,7 +25,8 @@ class IsTaskBoardMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         """Check if user is member or owner of the task's board."""
         board = obj.board
-        return board.owner == request.user or board.members.filter(id=request.user.id).exists()
+        return board.owner == request.user or board.members.filter(
+            id=request.user.id).exists()
 
 
 class IsTaskCreatorOrBoardOwner(BasePermission):
@@ -32,7 +34,10 @@ class IsTaskCreatorOrBoardOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """Check if user created the task or owns its board."""
-        return obj.created_by == request.user or obj.board.owner == request.user
+        return (
+            obj.created_by == request.user
+            or obj.board.owner == request.user
+        )
 
 
 class IsCommentAuthor(BasePermission):
