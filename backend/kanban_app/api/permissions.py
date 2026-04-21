@@ -1,4 +1,4 @@
-# 2. Drittanbieter
+# 2. Third-party
 from rest_framework.permissions import BasePermission
 
 

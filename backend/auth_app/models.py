@@ -1,4 +1,4 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 

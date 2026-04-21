@@ -1,7 +1,7 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.urls import path
 
-# 3. Lokale Importe
+# 3. Local imports
 from .views import (
     AssignedToMeView,
     BoardDetailView,

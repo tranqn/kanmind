@@ -2,3 +2,4 @@ Django>=4.2,<5.0
 djangorestframework>=3.14,<4.0
 # Token auth is built into djangorestframework — no extra package needed
 django-cors-headers
+python-dotenv>=1.0

@@ -1,8 +1,8 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-# 3. Lokale Importe
+# 3. Local imports
 from ..models import Board, Comment, Task
 
 User = get_user_model()
@@ -138,6 +138,12 @@ class BoardPatchSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     """Full task serializer with nested user representations."""
 
+    board = serializers.PrimaryKeyRelatedField(
+        queryset=Board.objects.all(), required=False
+    )
+    board_id = serializers.PrimaryKeyRelatedField(
+        queryset=Board.objects.all(), source='board', write_only=True, required=False
+    )
     assignee = UserInlineSerializer(read_only=True)
     reviewer = UserInlineSerializer(read_only=True)
     assignee_id = serializers.PrimaryKeyRelatedField(
@@ -151,11 +157,17 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'board', 'title', 'description', 'status', 'priority',
+            'id', 'board', 'board_id', 'title', 'description', 'status', 'priority',
             'assignee', 'assignee_id', 'reviewer', 'reviewer_id',
             'due_date', 'comments_count',
         ]
         read_only_fields = ['id', 'comments_count']
+
+    def validate(self, attrs):
+        """Require board on create (either `board` or `board_id` accepted)."""
+        if self.instance is None and 'board' not in attrs:
+            raise serializers.ValidationError({'board': 'This field is required.'})
+        return attrs
 
     def get_comments_count(self, obj):
         return obj.comments.count()

@@ -1,4 +1,4 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -14,6 +14,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['fullname', 'email', 'password', 'repeated_password']
+
+    def validate_email(self, value):
+        """Reject duplicate emails with a 400 rather than a DB IntegrityError."""
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return value
 
     def validate(self, attrs):
         """Ensure both passwords match."""

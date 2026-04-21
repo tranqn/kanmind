@@ -1,8 +1,8 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-# 3. Lokale Importe
+# 3. Local imports
 from .models import CustomUser
 
 

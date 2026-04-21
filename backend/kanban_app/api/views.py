@@ -1,11 +1,11 @@
-# 2. Drittanbieter
+# 2. Third-party
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# 3. Lokale Importe
+# 3. Local imports
 from ..models import Board, Comment, Task
 from .permissions import (
     IsBoardMemberOrOwner,

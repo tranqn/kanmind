@@ -1,7 +1,7 @@
-# 2. Drittanbieter
+# 2. Third-party
 from django.contrib import admin
 
-# 3. Lokale Importe
+# 3. Local imports
 from .models import Board, Comment, Task
 
 
