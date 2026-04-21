@@ -127,17 +127,22 @@ class TaskCreateView(APIView):
 
     def post(self, request):
         """Create task if user is a board member."""
-        serializer = TaskSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        board = serializer.validated_data.get('board')
-        if board is None:
+        raw_board = request.data.get('board_id', request.data.get('board'))
+        if raw_board in (None, ''):
             return Response({'detail': 'Board required.'},
                             status=status.HTTP_400_BAD_REQUEST)
+        try:
+            board = Board.objects.get(pk=raw_board)
+        except (Board.DoesNotExist, ValueError, TypeError):
+            return Response({'detail': 'Board not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
         is_member = board.members.filter(id=request.user.id).exists()
         is_owner = board.owner == request.user
         if not (is_member or is_owner):
             return Response({'detail': 'You must be a board member.'},
                             status=status.HTTP_403_FORBIDDEN)
+        serializer = TaskSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         task = serializer.save(created_by=request.user)
         return Response(TaskSerializer(task).data,
                         status=status.HTTP_201_CREATED)
